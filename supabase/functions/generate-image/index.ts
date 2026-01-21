@@ -24,20 +24,17 @@ serve(async (req) => {
     }
 
     // 构建图片生成 prompt
-    const prompt = `创作一张中国传统新春马年贺卡，画面风格：
-- 主色调：喜庆的中国红和吉祥金色
-- 核心元素：一匹优雅的骏马（剪影或写意风格）
-- 装饰元素：祥云、灯笼、烟花、梅花、福字
-- 画面布局：竖版海报设计，上方留白可放置文字
-- 艺术风格：中国传统剪纸艺术与现代插画结合
-- 氛围：喜庆、温暖、吉祥如意
-- 画面要精致华丽，适合手机分享
+    const prompt = `Chinese New Year 2026 Year of the Horse greeting card design:
+- Main colors: Festive Chinese red and auspicious gold
+- Central element: An elegant horse silhouette or artistic horse figure
+- Decorative elements: Auspicious clouds, red lanterns, fireworks, plum blossoms, Fu character
+- Layout: Vertical poster design (9:16 ratio)
+- Art style: Traditional Chinese paper-cut art combined with modern illustration
+- Atmosphere: Festive, warm, auspicious
+- High quality, suitable for mobile sharing
+- Display the greeting text "${greeting}" in beautiful calligraphy style on the image`;
 
-贺词内容：${greeting}
-
-请将贺词以优美的书法字体展示在画面上方或中心位置。`;
-
-    // 调用阿里云百炼 wan2.6-i2v 生成图片
+    // 调用阿里云百炼 flux-schnell 生成图片
     const response = await fetch('https://dashscope.aliyuncs.com/api/v1/services/aigc/text2image/image-synthesis', {
       method: 'POST',
       headers: {
@@ -46,13 +43,13 @@ serve(async (req) => {
         'X-DashScope-Async': 'enable',
       },
       body: JSON.stringify({
-        model: 'wan2.6-i2v',
+        model: 'flux-schnell',
         input: {
           prompt: prompt,
         },
         parameters: {
           size: '768*1344',  // 9:16 比例
-          n: 1,
+          seed: Math.floor(Math.random() * 1000000),
         }
       }),
     });
@@ -97,7 +94,9 @@ serve(async (req) => {
             }
           );
         } else if (statusData.output?.task_status === 'FAILED') {
-          throw new Error('Image generation failed');
+          const errorMessage = statusData.output?.message || 'Image generation failed';
+          console.error('Task failed:', errorMessage);
+          throw new Error(errorMessage);
         }
         
         attempts++;
