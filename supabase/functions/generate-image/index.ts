@@ -44,7 +44,7 @@ serve(async (req) => {
           prompt: prompt,
         },
         parameters: {
-          size: '768*1344',
+          size: '720*1280',  // 9:16 比例 - wanx-v1 支持的尺寸
           n: 1,
         }
       }),
