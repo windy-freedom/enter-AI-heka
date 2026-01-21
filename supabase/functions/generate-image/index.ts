@@ -37,7 +37,7 @@ serve(async (req) => {
 
 请将贺词以优美的书法字体展示在画面上方或中心位置。`;
 
-    // 调用阿里云百炼 qwen-image-max 生成图片
+    // 调用阿里云百炼 wan2.6-i2v 生成图片
     const response = await fetch('https://dashscope.aliyuncs.com/api/v1/services/aigc/text2image/image-synthesis', {
       method: 'POST',
       headers: {
@@ -46,7 +46,7 @@ serve(async (req) => {
         'X-DashScope-Async': 'enable',
       },
       body: JSON.stringify({
-        model: 'wanx-v1',
+        model: 'wan2.6-i2v',
         input: {
           prompt: prompt,
         },
@@ -71,7 +71,7 @@ serve(async (req) => {
       
       // 轮询查询任务状态
       let attempts = 0;
-      const maxAttempts = 30; // 最多等待30次（约60秒）
+      const maxAttempts = 40; // 最多等待40次（约80秒）
       
       while (attempts < maxAttempts) {
         await new Promise(resolve => setTimeout(resolve, 2000)); // 等待2秒
