@@ -4,7 +4,7 @@ import { Sparkles, Copy, Download, RefreshCw, Loader2, Image as ImageIcon } from
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { BackgroundDecorations } from '@/components/BackgroundDecorations';
-import { supabase } from '@/integrations/supabase/client';
+import { generateGreeting as apiGenerateGreeting, generateImage as apiGenerateImage } from '@/lib/dashscope';
 import { toast } from 'sonner';
 
 export default function Index() {
@@ -19,14 +19,9 @@ export default function Index() {
     setImageUrl('');
     
     try {
-      const { data, error } = await supabase.functions.invoke('generate-greeting');
-      
-      if (error) throw error;
-      
-      if (data?.greeting) {
-        setGreeting(data.greeting);
-        toast.success('贺词生成成功！');
-      }
+      const greetingText = await apiGenerateGreeting();
+      setGreeting(greetingText);
+      toast.success('贺词生成成功！');
     } catch (error) {
       console.error('Error:', error);
       toast.error('生成失败，请稍后重试');
@@ -41,16 +36,9 @@ export default function Index() {
     setIsGeneratingImage(true);
     
     try {
-      const { data, error } = await supabase.functions.invoke('generate-image', {
-        body: { greeting },
-      });
-      
-      if (error) throw error;
-      
-      if (data?.imageUrl) {
-        setImageUrl(data.imageUrl);
-        toast.success('图片生成成功！');
-      }
+      const imageUrlResult = await apiGenerateImage(greeting);
+      setImageUrl(imageUrlResult);
+      toast.success('图片生成成功！');
     } catch (error) {
       console.error('Error:', error);
       toast.error('图片生成失败，请稍后重试');
