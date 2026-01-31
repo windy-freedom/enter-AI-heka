@@ -1,12 +1,11 @@
 // 阿里云百炼 API 配置
-const API_KEY = 'sk-1871a27e3c234ac2bc52c0470041c314';
 const BASE_URL = 'https://dashscope.aliyuncs.com';
 
-export async function generateGreeting(): Promise<string> {
+export async function generateGreeting(apiKey: string): Promise<string> {
   const response = await fetch(`${BASE_URL}/compatible-mode/v1/chat/completions`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${API_KEY}`,
+      'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -35,14 +34,14 @@ export async function generateGreeting(): Promise<string> {
   return data.choices[0].message.content;
 }
 
-export async function generateImage(greeting: string): Promise<string> {
+export async function generateImage(apiKey: string, greeting: string): Promise<string> {
   const prompt = `中国传统马年新春贺卡设计，喜庆的红色和金色配色，优雅的骏马剪影，祥云、红灯笼、烟花装饰，中国传统剪纸艺术风格，竖版海报，精致华丽`;
 
   // 创建图片生成任务
   const response = await fetch(`${BASE_URL}/api/v1/services/aigc/text2image/image-synthesis`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${API_KEY}`,
+      'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
       'X-DashScope-Async': 'enable',
     },
@@ -72,7 +71,7 @@ export async function generateImage(greeting: string): Promise<string> {
 
     const statusResponse = await fetch(`${BASE_URL}/api/v1/tasks/${taskId}`, {
       headers: {
-        'Authorization': `Bearer ${API_KEY}`,
+        'Authorization': `Bearer ${apiKey}`,
       },
     });
 

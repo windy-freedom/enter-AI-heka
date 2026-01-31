@@ -1,30 +1,74 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Copy, Download, RefreshCw, Loader2, Image as ImageIcon } from 'lucide-react';
+import { Sparkles, Copy, Download, RefreshCw, Loader2, Image as ImageIcon, Key, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { BackgroundDecorations } from '@/components/BackgroundDecorations';
 import { generateGreeting as apiGenerateGreeting, generateImage as apiGenerateImage } from '@/lib/dashscope';
 import { toast } from 'sonner';
 
+const API_KEY_STORAGE_KEY = 'dashscope_api_key';
+
 export default function Index() {
+  const [apiKey, setApiKey] = useState('');
+  const [showKeyInput, setShowKeyInput] = useState(false);
   const [greeting, setGreeting] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
 
+  // 从 localStorage 读取 API Key
+  useEffect(() => {
+    const savedKey = localStorage.getItem(API_KEY_STORAGE_KEY);
+    if (savedKey) {
+      setApiKey(savedKey);
+    } else {
+      setShowKeyInput(true);
+    }
+  }, []);
+
+  const saveApiKey = () => {
+    if (!apiKey.trim()) {
+      toast.error('请输入 API Key');
+      return;
+    }
+    if (!apiKey.startsWith('sk-')) {
+      toast.error('API Key 格式不正确，应以 sk- 开头');
+      return;
+    }
+    localStorage.setItem(API_KEY_STORAGE_KEY, apiKey.trim());
+    setShowKeyInput(false);
+    toast.success('API Key 已保存');
+  };
+
+  const clearApiKey = () => {
+    localStorage.removeItem(API_KEY_STORAGE_KEY);
+    setApiKey('');
+    setShowKeyInput(true);
+    setGreeting('');
+    setImageUrl('');
+    toast.success('API Key 已清除');
+  };
+
   const generateGreeting = async () => {
+    if (!apiKey) {
+      setShowKeyInput(true);
+      toast.error('请先配置 API Key');
+      return;
+    }
+
     setIsGenerating(true);
     setGreeting('');
     setImageUrl('');
     
     try {
-      const greetingText = await apiGenerateGreeting();
+      const greetingText = await apiGenerateGreeting(apiKey);
       setGreeting(greetingText);
       toast.success('贺词生成成功！');
     } catch (error) {
       console.error('Error:', error);
-      toast.error('生成失败，请稍后重试');
+      toast.error('生成失败，请检查 API Key 是否正确');
     } finally {
       setIsGenerating(false);
     }
@@ -36,7 +80,7 @@ export default function Index() {
     setIsGeneratingImage(true);
     
     try {
-      const imageUrlResult = await apiGenerateImage(greeting);
+      const imageUrlResult = await apiGenerateImage(apiKey, greeting);
       setImageUrl(imageUrlResult);
       toast.success('图片生成成功！');
     } catch (error) {
@@ -104,6 +148,79 @@ export default function Index() {
             2026 龙马精神 • 马到成功
           </p>
         </motion.div>
+
+        {/* API Key 配置区 */}
+        <AnimatePresence>
+          {showKeyInput && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4 }}
+              className="mb-6"
+            >
+              <Card className="p-6 bg-card/95 backdrop-blur border-primary/20">
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <Key className="w-5 h-5 text-primary mt-0.5" />
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-lg mb-2">配置 API Key</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        请输入你的阿里云百炼平台 API Key，用于生成贺词和图片。
+                        <a 
+                          href="https://help.aliyun.com/zh/model-studio/getting-started/first-api-call-to-qwen" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline ml-1"
+                        >
+                          如何获取？
+                        </a>
+                      </p>
+                      <div className="flex gap-2">
+                        <Input
+                          type="password"
+                          placeholder="sk-xxxxxxxxxxxxxxxx"
+                          value={apiKey}
+                          onChange={(e) => setApiKey(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && saveApiKey()}
+                          className="flex-1"
+                        />
+                        <Button onClick={saveApiKey} variant="festive">
+                          保存
+                        </Button>
+                      </div>
+                      <div className="flex items-start gap-2 mt-3 text-xs text-muted-foreground">
+                        <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                        <p>
+                          API Key 仅保存在你的浏览器本地，不会上传到任何服务器。
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* API Key 状态显示 */}
+        {!showKeyInput && apiKey && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mb-6 flex justify-end"
+          >
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearApiKey}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <Key className="w-4 h-4 mr-2" />
+              更换 API Key
+            </Button>
+          </motion.div>
+        )}
 
         {/* 主内容区 */}
         <div className="space-y-6">
